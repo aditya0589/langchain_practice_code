@@ -30,5 +30,12 @@ def lookup(name: str) -> str:
              )
     ]
     react_prompt = hub.pull('hwchase17/react') # Harrsion chase 's react agent
+    agent = create_react_agent(llm=llm, toole=tools_for_agent, prompt=react_prompt)
+    agent_executer=AgentExecutor(agent=agent, tools=tools_for_agent, verbose=True)
 
-    
+    result = agent_executer.invoke(
+        input={'input':prompt_template.format_prompt(name_of_person=name)}
+    )
+
+    linkedin_profile_url = result['output']
+    return linkedin_profile_url
