@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts.prompt import PromptTemplate
 from langchain_core.tools import Tool
 from langchain.agents import (
@@ -18,7 +18,7 @@ from linkedin_profile_summarizer.tools.tools import get_profile_url_tavily
 load_dotenv()
 
 def lookup(name: str) -> str:
-    llm = ChatGroq(temperature = 0, model='llama3-70b-8192', groq_api_key=os.environ["GROQ_API_KEY"])
+    llm = ChatGoogleGenerativeAI(temperature = 0, model='gemini-pro', groq_api_key=os.environ["GROQ_API_KEY"])
 
     template = """
     given the full name of the person {name_of_person}, i want you
@@ -31,7 +31,7 @@ def lookup(name: str) -> str:
     )
     tools_for_agent = [
         Tool("Crawl Google 4 linkedin profile page",
-             func = "?",
+             func = get_profile_url_tavily,
              description="useful for when you want to get the Linkedin Page URL"
              )
     ]
