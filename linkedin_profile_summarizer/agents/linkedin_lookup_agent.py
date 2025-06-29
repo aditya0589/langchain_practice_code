@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain.prompts.prompt import PromptTemplate
 from langchain_core.tools import Tool
 from langchain.agents import (
@@ -18,7 +18,7 @@ from linkedin_profile_summarizer.tools.tools import get_profile_url_tavily
 load_dotenv()
 
 def lookup(name: str) -> str:
-    llm = ChatGoogleGenerativeAI(temperature = 0, model='gemini-pro', groq_api_key=os.environ["GROQ_API_KEY"])
+    llm = ChatGroq(temperature = 0, model='mixtral-8x7b-32768', groq_api_key=os.environ["GROQ_API_KEY"])
 
     template = """
     given the full name of the person {name_of_person}, i want you
