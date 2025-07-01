@@ -1,16 +1,15 @@
 from dotenv import load_dotenv
-from langchain.agents import tool
 from langchain.prompts import PromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
+from langchain_core.tools import tool
+from langchain.agents import AgentExecutor, create_react_agent
+
 load_dotenv()
 
 @tool
-def get_text_length(text:str)-> int:
-    """returns the length of the text by charecters"""
+def get_text_length(text: str) -> int:
+    """Returns the length of the text in characters."""
     return len(text)
-
-# The @tool is used to specify the agent that the function is a tool
-
 
 tools = [get_text_length]
 
@@ -33,12 +32,23 @@ Final Answer: the final answer to the original input question
 Begin!
 
 Question: {input}
-Thought:{agent_scratchpad}
+{agent_scratchpad}
 """
 
-prompt = PromptTemplate.from_template(template=template).partial(
-    tools=tools, tool_names=','.join([t.name for t in tools])
+prompt = PromptTemplate.from_template(template)
+
+llm = ChatGroq(
+    temperature=0,
+    model="llama3-8b-8192"
 )
 
-llm = ChatGoogleGenerativeAI(temperature=0, model='gemini-1.5-pro', model_kwargs={"stop":["\nObservation"]})
+agent = create_react_agent(
+    llm=llm,
+    tools=tools,
+    prompt=prompt
+)
 
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+
+res = agent_executor.invoke({"input": "What is the text length of 'DOG' in characters?"})
+print(res)
