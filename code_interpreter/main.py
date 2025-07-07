@@ -1,8 +1,9 @@
 from dotenv import load_dotenv
 from langchain import hub
 from langchain_groq import ChatGroq
-from langchain.agents import create_react_agent,AgentExecutor
+from langchain.agents import create_react_agent, AgentExecutor
 from langchain_experimental.tools import PythonREPLTool
+from langchain_experimental.agents import create_csv_agent
 # The pytohnREPLTool gives the agent the power to write and execute
 #python code in the interpreter. This is very cool but highly dangerous in production
 
@@ -32,13 +33,23 @@ def main():
         tools = tools,
     )
     agent_executer = AgentExecutor(agent=agent, tools = tools, verbose=True)
-    agent_executer.invoke(
-        input= {
-            "input": """
-            create a text file containing 5 sentences to roast me and make 
-            my life miserable
-            """
-        }
+    # agent_executer.invoke(
+    #     input= {
+    #         "input": """
+    #         create a text file containing 5 sentences to roast me and make 
+    #         my life miserable
+    #         """
+    #     }
+    # )
+
+    csv_agent = create_csv_agent(
+        llm = ChatGroq(temperature=0, model="llama3-70b-8192"),
+        path="episode_info.csv",
+        verbose=True,
+        allow_dangerous_code=True,
+    )
+    csv_agent.invoke(
+        input={"input": "How many episodes does each season have?"}
     )
 
 main()
