@@ -4,6 +4,7 @@ from langchain_groq import ChatGroq
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain_experimental.tools import PythonREPLTool
 from langchain_experimental.agents import create_csv_agent
+from langchain.tools import Tool
 # The pytohnREPLTool gives the agent the power to write and execute
 #python code in the interpreter. This is very cool but highly dangerous in production
 
@@ -27,13 +28,13 @@ def main():
     prompt = base_prompt.partial(instructions=instructions)
 
     tools = [PythonREPLTool()]
-    agent = create_react_agent(
+    python_agent = create_react_agent(
         prompt = prompt,
         llm=ChatGroq(temperature=0, model='llama3-70b-8192'),
         tools = tools,
     )
-    agent_executer = AgentExecutor(agent=agent, tools = tools, verbose=True)
-    # agent_executer.invoke(
+    python_agent_executer = AgentExecutor(agent=python_agent, tools = tools, verbose=True)
+    # python_agent_executer.invoke(
     #     input= {
     #         "input": """
     #         create a text file containing 5 sentences to roast me and make 
@@ -42,15 +43,57 @@ def main():
     #     }
     # )
 
-    csv_agent = create_csv_agent(
+    # csv_agent = create_csv_agent(
+    #     llm = ChatGroq(temperature=0, model="llama3-70b-8192"),
+    #     path="episode_info.csv",
+    #     verbose=True,
+    #     allow_dangerous_code=True,
+    # )
+    # csv_agent.invoke(
+    #     input={"input": "How many episodes does each season have?"}
+    # )
+    csv_agent_executer: AgentExecutor = create_csv_agent(
         llm = ChatGroq(temperature=0, model="llama3-70b-8192"),
         path="episode_info.csv",
         verbose=True,
-        allow_dangerous_code=True,
+        allow_dangerous_code=True, 
     )
-    csv_agent.invoke(
-        input={"input": "How many episodes does each season have?"}
+
+    tools = [
+        Tool(
+            name = "Python Agent",
+            func = python_agent_executer.invoke,
+            description = """
+            useful when you need to transform natural language to python and execute
+            the python code. return results of the code execution.
+            DOES NOT ACCEPT CODE AS INPUT
+            """
+        ),
+        Tool(
+            name = "CSV Agent",
+            func = csv_agent_executer.invoke,
+            description = """
+            useful when you need to return a query on a CSV file, over the 
+            episode_info.csv file. takes the entire query as an input and returns 
+            the results after certain pandas calculations. 
+            """
+        )
+    ]
+    prompt = base_prompt.partial(instructions="")
+    grand_agent = create_react_agent(
+        prompt = prompt,
+        llm = ChatGroq(temperature=0, model="llama3-70b-8192"),
+        tools = tools,
+    )
+    grand_agent_executer = AgentExecutor(agent = grand_agent, tools = tools, verbose = True,
+                                         allow_dangerous_code = True)
+    
+    print(
+        grand_agent_executer.invoke(
+            {
+                "input": "which season has the most episodes?"
+            }
+        )
     )
 
 main()
-
